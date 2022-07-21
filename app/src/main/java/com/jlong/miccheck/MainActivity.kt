@@ -7,10 +7,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.ComponentName
-import android.content.ContentUris
-import android.content.Intent
-import android.content.ServiceConnection
+import android.content.*
 import android.content.pm.PackageManager
 import android.media.MediaMetadata.METADATA_KEY_MEDIA_URI
 import android.net.Uri
@@ -477,22 +474,33 @@ class MainActivity : ComponentActivity() {
         pickFileRequest.launch(intent)
     }
     private val pickFileRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        if (it.resultCode == RESULT_OK)
-            it.data?.data?.also {
-                MediaStore.getMediaUri(this, it)?.let { it1 -> pickFileOnSuccess(it1) }
-            }
+        try {
+            if (it.resultCode == RESULT_OK)
+                it.data?.data?.also {
+                    MediaStore.getMediaUri(this, it)?.let { it1 -> pickFileOnSuccess(it1) }
+                }
+        } catch (e: IllegalArgumentException) {
+            e.printStackTrace()
+            Toast.makeText(this, "File type not supported.", Toast.LENGTH_LONG).show()
+        }
     }
 
     fun launchUri (typeString: String, uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
 
-        val candidateApps = packageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL)
-        candidateApps.forEach {
-            Log.i("PM", it.resolvePackageName)
+//        val candidateApps = packageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL)
+//        candidateApps.forEach {
+//            Log.i("PM", it.resolvePackageName)
+//        }
+//        Log.i("PM", candidateApps.size.toString())
+//        Log.i("PM", uri.toString())
+//        if (true)
+        try {
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            e.printStackTrace()
+            Toast.makeText(this, "No app found to open this attachment.", Toast.LENGTH_LONG).show()
         }
-        Log.i("PM", candidateApps.size.toString())
-        Log.i("PM", uri.toString())
-        if (true) startActivity(intent)
     }
 }
 

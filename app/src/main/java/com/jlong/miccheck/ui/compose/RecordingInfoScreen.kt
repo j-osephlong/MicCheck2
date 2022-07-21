@@ -9,7 +9,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -145,6 +144,7 @@ fun RecordingInfoScreen(
         mutableStateOf<Attachment?>(null)
     }
     var showAttachmentDialog by remember { mutableStateOf(false) }
+    var showAddLinkAttachmentDialog by remember { mutableStateOf(false) }
 
     var isStarred by remember { mutableStateOf(false) }
     isStarred = viewModel.groups.find { it.uuid == starredGroupUUID }
@@ -737,7 +737,7 @@ fun RecordingInfoScreen(
                                     }
                                 }
 
-                                AddAttachmentButton {
+                                AddAttachmentButtons ({showAddLinkAttachmentDialog = true}) {
                                     pickFile { uri ->
                                         DocumentFile.fromSingleUri(context, uri).also {
                                             viewModel.addAttachmentToRecording(
@@ -758,13 +758,23 @@ fun RecordingInfoScreen(
                     }
                 }
             }
-            Spacer(Modifier.height(12.dp + WindowInsets.navigationBars
+            Spacer(Modifier.height(144.dp + WindowInsets.navigationBars
                 .asPaddingValues()
                 .calculateBottomPadding()))
         }
     }
-
-    AttachementDialog (
+    
+    NewLinkAttachmentDialog(visible = showAddLinkAttachmentDialog, onClose = { showAddLinkAttachmentDialog = false }) {
+        val url = it.let {
+            if (!it.startsWith("https://") && !it.startsWith("http://"))
+                "https://" + it
+            else it
+        }
+        viewModel.addAttachmentToRecording(recording.first, Attachment(url, url, url, "http"))
+        showAddLinkAttachmentDialog = false
+    }
+    
+    AttachmentDialog (
         visible = showAttachmentDialog,
         attachment = attachmentForDialog,
         onClose = {showAttachmentDialog = false},

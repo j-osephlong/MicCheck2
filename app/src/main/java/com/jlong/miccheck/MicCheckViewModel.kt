@@ -398,9 +398,11 @@ class MicCheckViewModel : ViewModel() {
     }
 
     fun addAttachmentToRecording (recording: Recording, attachment: Attachment) {
-        getRecordingData(recording).apply {
-            attachments = this.attachments + attachment
-        }
+
+        val recordingData = getRecordingData(recording)
+        recordingsData.add(recordingsData.indexOf(recordingData), recordingsData.removeAt(recordingsData.indexOf(recordingData)).copy(
+            attachments = recordingData.attachments + attachment
+        ))
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
