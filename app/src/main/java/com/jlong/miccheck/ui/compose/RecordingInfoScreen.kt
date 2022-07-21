@@ -144,6 +144,7 @@ fun RecordingInfoScreen(
         mutableStateOf<Attachment?>(null)
     }
     var showAttachmentDialog by remember { mutableStateOf(false) }
+    var showEditAttachmentDialog by remember { mutableStateOf(false) }
     var showAddLinkAttachmentDialog by remember { mutableStateOf(false) }
 
     var isStarred by remember { mutableStateOf(false) }
@@ -763,6 +764,28 @@ fun RecordingInfoScreen(
                 .calculateBottomPadding()))
         }
     }
+
+    EditAttachmentDialog(
+        visible = showEditAttachmentDialog,
+        onClose = { showEditAttachmentDialog = false },
+        onDelete = {
+            attachmentForDialog?.let {
+                viewModel.deleteAttachmentToRecording(recording = recording.first,
+                    it
+                )
+            }
+            showEditAttachmentDialog = false
+        }
+    ) { name ->
+        attachmentForDialog?.let {
+            viewModel.editAttachmentToRecording(
+                recording.first,
+                it,
+                name
+            )
+        }
+        showEditAttachmentDialog = false
+    }
     
     NewLinkAttachmentDialog(visible = showAddLinkAttachmentDialog, onClose = { showAddLinkAttachmentDialog = false }) {
         val url = it.let {
@@ -778,7 +801,10 @@ fun RecordingInfoScreen(
         visible = showAttachmentDialog,
         attachment = attachmentForDialog,
         onClose = {showAttachmentDialog = false},
-        onEdit = {showAttachmentDialog = false}
+        onEdit = {
+            showAttachmentDialog = false
+            showEditAttachmentDialog = true
+        }
     ) {
         attachmentForDialog?.let { launchUri(it.mimeType, Uri.parse(it.attachmentUri)) }
         showAttachmentDialog = false

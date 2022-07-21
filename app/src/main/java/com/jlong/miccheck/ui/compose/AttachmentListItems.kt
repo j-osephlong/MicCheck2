@@ -50,16 +50,26 @@ fun FileListItem(attachment: Attachment, onClick: () -> Unit) {
                 .fillMaxWidth()
                 .weight(1f),
             verticalAlignment = Alignment.CenterVertically){
-                Text(
-                    if (attachment.mimeType != "http")
-                        attachment.name.substringBefore(".")
-                    else
-                        attachment.name.substringAfter("https://"),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier
+                Column (
+                    Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                )
+                ){
+                    Text(
+                        if (attachment.name == attachment.fileName) {
+                            if (attachment.mimeType != "http")
+                                attachment.fileName.substringBefore(".")
+                            else
+                                attachment.fileName.substringAfter("https://")
+                        } else attachment.name,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    if (attachment.name != attachment.fileName) {
+                        Text(
+                            attachment.fileName, style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
                 Text(
                     attachment.mimeType.substringAfterLast("/").uppercase(Locale.getDefault()),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
@@ -169,6 +179,7 @@ fun AttachmentDialog(visible: Boolean, attachment: Attachment?, onClose: () -> U
             }
         )
 }
+
 @Composable
 fun NewLinkAttachmentDialog(visible: Boolean, onClose: () -> Unit, onConfirm: (String) -> Unit) {
     val (urlText, setUrlText) = remember { mutableStateOf("") }
@@ -213,6 +224,58 @@ fun NewLinkAttachmentDialog(visible: Boolean, onClose: () -> Unit, onConfirm: (S
             dismissButton = {
                 TextButton(onClick = onClose) {
                     Text("Cancel")
+                }
+            }
+        )
+}
+
+@Composable
+fun EditAttachmentDialog(visible: Boolean, onClose: () -> Unit, onDelete: () -> Unit, onConfirm: (String) -> Unit) {
+    val (nameText, setNameText) = remember { mutableStateOf("") }
+    var isError by remember { mutableStateOf(false) }
+
+    if (visible)
+        AlertDialog(
+            onDismissRequest = onClose,
+            title = { Text("Edit Recording") },
+            text = {
+                TextField(
+                    value = nameText,
+                    onValueChange = { setNameText(it); isError = false },
+                    placeholder = { Text("Attachment name") },
+                    label = if (isError) {{Text("This is an invalid name.")}} else null,
+                    isError = isError,
+                    shape = RoundedCornerShape(28.dp),
+                    colors = TextFieldDefaults.textFieldColors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    maxLines = 1,
+                    trailingIcon = {
+                        IconButton(onClick = { setNameText("") }) {
+                            Icon(Icons.Rounded.Close, null)
+                        }
+                    }
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (nameText.isNotBlank())
+                        onConfirm(nameText)
+                    else
+                        isError = true
+
+                }) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onClose) {
+                    Text("Cancel")
+                }
+                OutlinedButton(onClick = onDelete) {
+                    Text("Delete")
                 }
             }
         )

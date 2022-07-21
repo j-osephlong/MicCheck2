@@ -293,11 +293,15 @@ class MicCheckViewModel : ViewModel() {
     ) {
         if (recording.uri.toString() in group.recordings) return
 
-        groups.add(
-            groups.indexOf(group), groups.removeAt(groups.indexOf(group)).copy(
-                recordings = group.recordings + recording.uri.toString()
-            )
-        )
+//        groups.add(
+//            groups.indexOf(group), groups.removeAt(groups.indexOf(group)).copy(
+//                recordings = group.recordings + recording.uri.toString()
+//            )
+//        )
+
+        groups.replace(group, group.copy(
+            recordings = group.recordings + recording.uri.toString()
+        ))
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -325,7 +329,10 @@ class MicCheckViewModel : ViewModel() {
         uri: Uri,
         group: RecordingGroup
     ) {
-        groups.add(groups.indexOf(group), groups.removeAt(groups.indexOf(group)).copy(imgUri = uri.toString()))
+//        groups.add(groups.indexOf(group), groups.removeAt(groups.indexOf(group)).copy(imgUri = uri.toString()))
+        groups.replace(
+            group, group.copy(imgUri = uri.toString())
+        )
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -340,8 +347,14 @@ class MicCheckViewModel : ViewModel() {
     ) {
         Log.i("ViewModel", "Removing recordings from group ${group.name}${recordings.fold("") { str, it -> str + "\n\t${it.name}" }}")
 
-        groups.add(
-            groups.indexOf(group), groups.removeAt(groups.indexOf(group)).copy(
+//        groups.add(
+//            groups.indexOf(group), groups.removeAt(groups.indexOf(group)).copy(
+//                recordings = group.recordings.filter { it !in recordings.map { it.uri.toString() } }
+//            )
+//        )
+        groups.replace(
+            group,
+            group.copy(
                 recordings = group.recordings.filter { it !in recordings.map { it.uri.toString() } }
             )
         )
@@ -376,9 +389,16 @@ class MicCheckViewModel : ViewModel() {
             it !in group.recordings
         }
 
-        groups.add(groups.indexOf(group), groups.removeAt(groups.indexOf(group)).copy(
-            recordings = group.recordings + filteredList
-        ))
+//        groups.add(groups.indexOf(group), groups.removeAt(groups.indexOf(group)).copy(
+//            recordings = group.recordings + filteredList
+//        ))
+        groups.replace(
+            group,
+            group.copy(
+                recordings = group.recordings + filteredList
+            )
+        )
+
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -400,9 +420,51 @@ class MicCheckViewModel : ViewModel() {
     fun addAttachmentToRecording (recording: Recording, attachment: Attachment) {
 
         val recordingData = getRecordingData(recording)
-        recordingsData.add(recordingsData.indexOf(recordingData), recordingsData.removeAt(recordingsData.indexOf(recordingData)).copy(
-            attachments = recordingData.attachments + attachment
-        ))
+//        recordingsData.add(recordingsData.indexOf(recordingData), recordingsData.removeAt(recordingsData.indexOf(recordingData)).copy(
+//            attachments = recordingData.attachments + attachment
+//        ))
+//
+        recordingsData.replace(
+            recordingData,
+            recordingData.copy(
+                attachments = recordingData.attachments + attachment
+            )
+        )
+
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                serializeAndSave()
+            }
+        }
+    }
+
+    fun deleteAttachmentToRecording (recording: Recording, attachment: Attachment) {
+        val recordingData = getRecordingData(recording)
+
+        recordingsData.replace(
+            recordingData,
+            recordingData.copy(
+                attachments = recordingData.attachments - attachment
+            )
+        )
+
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                serializeAndSave()
+            }
+        }
+    }
+
+    fun editAttachmentToRecording(recording: Recording, attachment: Attachment, name: String) {
+        val recordingData = getRecordingData(recording)
+
+        recordingsData.replace(
+            recordingData,
+            recordingData.apply {
+                attachments += attachment.copy(name = name)
+                attachments -= attachment
+            }
+        )
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
