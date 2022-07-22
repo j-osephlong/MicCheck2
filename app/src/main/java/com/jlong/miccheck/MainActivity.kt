@@ -477,7 +477,8 @@ class MainActivity : ComponentActivity() {
         try {
             if (it.resultCode == RESULT_OK)
                 it.data?.data?.also {
-                    MediaStore.getMediaUri(this, it)?.let { it1 -> pickFileOnSuccess(it1) }
+                    contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    pickFileOnSuccess(it)
                 }
         } catch (e: IllegalArgumentException) {
             e.printStackTrace()
@@ -487,6 +488,7 @@ class MainActivity : ComponentActivity() {
 
     fun launchUri (typeString: String, uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
+        intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
 
 //        val candidateApps = packageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL)
 //        candidateApps.forEach {
