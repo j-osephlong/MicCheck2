@@ -37,10 +37,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.android.play.core.review.ReviewManagerFactory
-import com.jlong.miccheck.MicCheckViewModel
-import com.jlong.miccheck.PlaybackClientControls
-import com.jlong.miccheck.RecorderClientControls
-import com.jlong.miccheck.ThemeOptions
+import com.jlong.miccheck.*
 import com.jlong.miccheck.ui.theme.surfaceColorAtElevation
 import kotlinx.coroutines.launch
 
@@ -55,6 +52,7 @@ fun MicTopBar (navHost: NavHostController, backdropScaffoldState: BackdropScaffo
     var showThemeDialog by remember { mutableStateOf(false) }
     var showComingSoonDialog by remember { mutableStateOf(false) }
     var showImportExportDialog by remember { mutableStateOf(viewModel.stats.appLaunches == 5) }
+    var showBitrateDialog by remember { mutableStateOf(viewModel.stats.appLaunches == 5) }
 
     Crossfade(targetState = navBackStackEntry?.destination?.route == Destination.Search.route) {
         if (it)
@@ -104,7 +102,7 @@ fun MicTopBar (navHost: NavHostController, backdropScaffoldState: BackdropScaffo
                                     DropdownMenuItem(
                                         text = { Text("Bitrate Options") },
                                         onClick = {
-                                            showComingSoonDialog = true; dropDownMenuExpanded =
+                                            showBitrateDialog = true; dropDownMenuExpanded =
                                             false
                                         })
                                     DropdownMenuItem(
@@ -137,6 +135,12 @@ fun MicTopBar (navHost: NavHostController, backdropScaffoldState: BackdropScaffo
                 modifier = Modifier.height(64.dp)
             )
     }
+
+    BitrateDialog(visible = showBitrateDialog, currentBitrate = viewModel.settings.encodingBitRate, onClose = { showBitrateDialog = false }) {
+        viewModel.setBitrate(it)
+        showBitrateDialog = false
+    }
+
     SetThemeDialog(
         visible = showThemeDialog,
         currentSelection = viewModel.settings.theme,

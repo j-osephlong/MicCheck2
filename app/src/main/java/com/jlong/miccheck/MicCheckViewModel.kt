@@ -541,4 +541,16 @@ class MicCheckViewModel : ViewModel() {
             }
         }
     }
+
+    fun setBitrate(bitrate: Int) {
+        settings = settings.copy(
+            encodingBitRate = bitrate
+        )
+
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                serializeAndSave()
+            }
+        }
+    }
 }
