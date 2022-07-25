@@ -535,7 +535,7 @@ fun MainActivity.discoverAudioFiles () {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         arrayOf("%micCheck%")
     } else {
-        arrayOf("%micCheck%")
+        arrayOf()
     }
     val sortOrder = MediaStore.Audio.Media.DATE_MODIFIED + " DESC"
 
