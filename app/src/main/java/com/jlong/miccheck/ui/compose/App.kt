@@ -136,7 +136,15 @@ fun MicTopBar (navHost: NavHostController, backdropScaffoldState: BackdropScaffo
             )
     }
 
-    BitrateDialog(visible = showBitrateDialog, currentBitrate = viewModel.settings.encodingBitRate, onClose = { showBitrateDialog = false }) {
+    BitrateDialog(
+        visible = showBitrateDialog,
+        currentBitrate = viewModel.settings.encodingBitRate,
+        onReset = {
+            viewModel.setBitrate(UserAndSettings().encodingBitRate)
+            showBitrateDialog = false
+        },
+        onClose = { showBitrateDialog = false }
+    ) {
         viewModel.setBitrate(it)
         showBitrateDialog = false
     }

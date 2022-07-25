@@ -274,7 +274,7 @@ fun EditAttachmentDialog(visible: Boolean, onClose: () -> Unit, onDelete: () -> 
                 TextButton(onClick = onClose) {
                     Text("Cancel")
                 }
-                OutlinedButton(onClick = onDelete) {
+                FilledTonalButton(onClick = onDelete) {
                     Text("Delete")
                 }
             }
