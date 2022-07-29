@@ -20,8 +20,8 @@ android {
         applicationId "com.jlong.miccheck"
         minSdk 26
         targetSdk 33
-        versionCode 16
-        versionName "2.1"
+        versionCode 17
+        versionName "2.1 - internal"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -96,4 +96,7 @@ dependencies {
     implementation "com.github.skgmn:composetooltip:0.2.0"
     implementation "androidx.constraintlayout:constraintlayout-compose:1.0.0-beta02"
     implementation "org.burnoutcrew.composereorderable:reorderable:0.9.2"
+
+    def billing_version = "4.0.0"
+    implementation "com.android.billingclient:billing-ktx:$billing_version"
 }

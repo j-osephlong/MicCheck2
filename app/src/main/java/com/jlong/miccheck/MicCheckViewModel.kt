@@ -19,6 +19,8 @@ import java.util.*
 class MicCheckViewModel : ViewModel() {
     lateinit var serializeAndSave: () -> Unit
 
+    var isPro by mutableStateOf(false)
+
     var deniedPermissions = mutableStateListOf<String>()
 
     var settings by mutableStateOf(UserAndSettings())
@@ -488,6 +490,7 @@ class MicCheckViewModel : ViewModel() {
     }
 
     fun starRecording(recording: Recording) {
+        Log.e("VM - STAR", groups.find { it.uuid == starredGroupUUID }.toString())
         groups.find { it.uuid == starredGroupUUID }?.also {
             addRecordingToGroup(it, recording)
         }

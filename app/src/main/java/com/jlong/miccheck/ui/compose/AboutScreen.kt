@@ -68,7 +68,7 @@ fun AboutScreen (
                     Spacer(Modifier.height(4.dp))
                     Text("Developed by Joseph Long for fun.", style = MaterialTheme.typography.labelLarge.copy(fontStyle = FontStyle.Italic))
                     Spacer(Modifier.height(18.dp))
-                    Text("Version ${BuildConfig.VERSION_NAME} - Free Edition", style = MaterialTheme.typography.titleMedium)
+                    Text("Version ${BuildConfig.VERSION_NAME} - ${if (viewModel.isPro) "Pro Edition" else "Free Edition"}", style = MaterialTheme.typography.titleMedium)
                 }
             }
             Spacer(Modifier.height(12.dp))

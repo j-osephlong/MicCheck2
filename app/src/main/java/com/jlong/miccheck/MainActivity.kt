@@ -35,9 +35,12 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.jlong.miccheck.billing.Billing
+import com.jlong.miccheck.billing.PRO_SKU
 import com.jlong.miccheck.ui.compose.*
 import com.jlong.miccheck.ui.theme.MicCheckTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -119,6 +122,11 @@ class MainActivity : ComponentActivity() {
             }
         }
         Log.i("MAIN_A", viewModel.recordings.toList().toString())
+
+        Billing.getInstance(application, GlobalScope, arrayOf(PRO_SKU)) {
+            getSharedPreferences("micCheck", MODE_PRIVATE).edit().putBoolean("is_pro", it).apply()
+            viewModel.isPro = it
+        }
 
         setContent {
             MicCheckTheme (

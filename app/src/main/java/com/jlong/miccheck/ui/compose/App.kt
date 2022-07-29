@@ -1,6 +1,7 @@
 package com.jlong.miccheck.ui.compose
 
 import android.app.Activity
+import android.app.Application
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -38,13 +39,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.jlong.miccheck.*
+import com.jlong.miccheck.billing.Billing
+import com.jlong.miccheck.billing.PRO_SKU
 import com.jlong.miccheck.ui.theme.surfaceColorAtElevation
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 val backdropContainerColor = @Composable { if (false) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp) }
 val backdropContentColor = @Composable { if (false) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun MicTopBar (navHost: NavHostController, backdropScaffoldState: BackdropScaffoldState, viewModel: MicCheckViewModel, exportData: () -> Unit, importData: () -> Unit) {
     val navBackStackEntry by navHost.currentBackStackEntryAsState()
@@ -53,6 +58,8 @@ fun MicTopBar (navHost: NavHostController, backdropScaffoldState: BackdropScaffo
     var showComingSoonDialog by remember { mutableStateOf(false) }
     var showImportExportDialog by remember { mutableStateOf(viewModel.stats.appLaunches == 5) }
     var showBitrateDialog by remember { mutableStateOf(viewModel.stats.appLaunches == 5) }
+
+    val context = LocalContext.current
 
     Crossfade(targetState = navBackStackEntry?.destination?.route == Destination.Search.route) {
         if (it)
@@ -115,8 +122,11 @@ fun MicTopBar (navHost: NavHostController, backdropScaffoldState: BackdropScaffo
                                     DropdownMenuItem(
                                         text = { Text("Support the Developer") },
                                         onClick = {
-                                            showComingSoonDialog = true; dropDownMenuExpanded =
-                                            false
+                                            Billing.getInstance(
+                                                (context as Activity).application, GlobalScope, arrayOf(PRO_SKU), {}
+                                            ).launchBillingFlow(
+                                                context as Activity, PRO_SKU
+                                            )
                                         })
                                     DropdownMenuItem(
                                         text = { Text("About") },

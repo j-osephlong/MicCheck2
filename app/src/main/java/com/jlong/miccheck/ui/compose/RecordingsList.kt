@@ -105,7 +105,8 @@ fun RecordingsListFrame(
             GroupList(
                 navController = navController,
                 viewModel = viewModel,
-                recorderClientControls = recorderClientControls
+                recorderClientControls = recorderClientControls,
+                pickImage
             )
         }
     }

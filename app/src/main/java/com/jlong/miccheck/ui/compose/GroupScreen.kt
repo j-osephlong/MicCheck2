@@ -30,6 +30,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -105,9 +107,6 @@ fun GroupScreen (
         mutableStateOf(0.dp)
     }
 
-    val titleFont = MaterialTheme.typography.displaySmall
-    var titleFontSize by remember { mutableStateOf(titleFont.fontSize) }
-
     val toggleEditing: () -> Unit = {
         coroutineScope.launch {
             if (!isEditing)
@@ -146,10 +145,6 @@ fun GroupScreen (
     Surface(Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val viewHeight = this.maxHeight
-            var imageExpanded by remember { mutableStateOf(false) }
-            val imageHeight by animateDpAsState(
-                if (imageExpanded) viewHeight else (viewHeight.value*0.35).dp
-            )
 
             Column(Modifier.fillMaxSize()) {
                 LazyColumn (
@@ -158,207 +153,38 @@ fun GroupScreen (
                         .reorderable(lazyListState)
                 ) {
                     item {
-                        BoxWithConstraints(
-                            Modifier
-                                .fillMaxWidth()
-                                .then(
-                                    if (group.imgUri != null) Modifier.height(imageHeight) else Modifier
+                        GroupHeader(
+                            group = group,
+                            viewHeight = viewHeight,
+                            isEditing = isEditing,
+                            fieldTextPadding = fieldTextPadding,
+                            titleFieldText = titleFieldText,
+                            setTitleFieldText = { titleFieldText = it },
+                            groupDuration = group.recordings.sumOf {
+                                viewModel.getRecording(Uri.parse(it))!!.duration
+                            },
+                            pickImage = {
+                                pickImage(
+                                    { viewModel.setGroupImage(it, group) },
+                                    {}
                                 )
-                                .clickable { imageExpanded = !imageExpanded && !isEditing }
-                                .clip(
-                                    animateDpAsState(
-                                        if (imageExpanded) 0.dp else 18.dp
-                                    ).value.let {
-                                        RoundedCornerShape(
-                                            0.dp, 0.dp,
-                                            it, it
+                            },
+                            onClickEditButton = {
+                                if (isEditing) {
+                                    if (selectedForRemoval.isNotEmpty())
+                                        viewModel.removeRecordingsFromGroup(
+                                            selectedForRemoval,
+                                            group
                                         )
-                                    }
-                                )
-                        ) {
-                            val boxMaxWidth = this.maxWidth
-                            group.imgUri?.let {
-                                AsyncImage(
-                                    model = Uri.parse(it),
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop,
-                                    contentDescription = null
-                                )
-                            }
-                            Surface (
-                                color = Color.Transparent,
-                                modifier = Modifier.align(Alignment.BottomStart).then (
-                                    if (group.imgUri != null) Modifier else Modifier.fillMaxWidth()
-                                )
-                            ){
-                                Column(
-                                    Modifier
-                                        .fillMaxWidth()
-                                ) {
-                                    Spacer(Modifier.height(18.dp))
-                                    Row {
-                                        Spacer(Modifier.width(12.dp))
-                                        Surface(
-                                            shape = MaterialTheme.shapes.small,
-                                            color = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            onClick = { },
-                                            modifier = Modifier.height(24.dp),
-                                            shadowElevation = if (group.imgUri != null) 8.dp else 0.dp
-                                        ) {
-                                            Text(
-                                                "${group.recordings.size} Recording${if (group.recordings.size != 1) "s" else ""}",
-                                                style = MaterialTheme.typography.labelMedium.copy(
-                                                    fontWeight = FontWeight.Bold
-                                                ),
-                                                maxLines = 3,
-                                                overflow = TextOverflow.Ellipsis,
-                                                modifier = Modifier.padding(8.dp, 4.dp)
-                                            )
-                                        }
-                                        Spacer(Modifier.width(8.dp))
-                                        Surface(
-                                            shape = MaterialTheme.shapes.small,
-                                            color = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            onClick = { },
-                                            modifier = Modifier.height(24.dp),
-                                            shadowElevation = if (group.imgUri != null) 8.dp else 0.dp
-                                        ) {
-                                            Text(
-                                                group.recordings.sumOf {
-                                                    viewModel.getRecording(Uri.parse(it))!!.duration
-                                                }.toLong().toTimestamp(),
-                                                style = MaterialTheme.typography.labelMedium.copy(
-                                                    fontWeight = FontWeight.Bold
-                                                ),
-                                                maxLines = 3,
-                                                overflow = TextOverflow.Ellipsis,
-                                                modifier = Modifier.padding(
-                                                    8.dp,
-                                                    4.dp
-                                                )
-                                            )
-
-                                        }
-                                        Spacer(Modifier.width(12.dp))
-                                    }
-                                    Surface(
-                                        shape = MaterialTheme.shapes.medium,
-                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 1f),
-                                        modifier = Modifier
-                                            .padding(12.dp)
-                                            .widthIn(max = (0.75 * boxMaxWidth.value).dp),
-                                        shadowElevation = if (group.imgUri != null) 8.dp else 0.dp
-                                    ) {
-                                        Crossfade(
-                                            targetState = isEditing,
-                                            modifier = Modifier.animateContentSize()
-                                        ) {
-                                            if (!it)
-                                                Text(
-                                                    group.name,
-                                                    style = MaterialTheme.typography.displaySmall.copy(
-                                                        fontSize = titleFontSize
-                                                    ),
-                                                    modifier = Modifier.padding(8.dp + fieldTextPadding),
-                                                    maxLines = 2,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                    onTextLayout = { textLayoutResult ->
-                                                        val maxCurrentLineIndex: Int =
-                                                            textLayoutResult.lineCount - 1
-
-                                                        if (textLayoutResult.isLineEllipsized(
-                                                                maxCurrentLineIndex
-                                                            )
-                                                        ) {
-                                                            titleFontSize = titleFontSize.times(
-                                                                TEXT_SCALE_REDUCTION_INTERVAL
-                                                            )
-                                                        }
-                                                    }
-                                                )
-                                            else
-                                                TextField(
-                                                    value = titleFieldText,
-                                                    onValueChange = { titleFieldText = it },
-                                                    shape = MaterialTheme.shapes.medium,
-                                                    colors = TextFieldDefaults.textFieldColors(
-                                                        focusedIndicatorColor = Color.Transparent,
-                                                        unfocusedIndicatorColor = Color.Transparent,
-                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                                    ),
-                                                    textStyle = MaterialTheme.typography.displaySmall.copy(
-                                                        fontSize = titleFontSize
-                                                    )
-                                                )
-                                        }
-                                    }
-                                    Spacer(
-                                        modifier = Modifier.height(
-                                            animateDpAsState(
-                                                if (imageExpanded) WindowInsets.navigationBars.asPaddingValues()
-                                                    .calculateBottomPadding() else 0.dp
-                                            ).value
-                                        )
-                                    )
+                                    recordings =
+                                        recordings.filter { it !in selectedForRemoval.map { it.uri.toString() } }
+                                    selectedForRemoval = mutableStateListOf()
+                                    viewModel.editGroupName(titleFieldText, group)
                                 }
+                                titleFieldText = group.name
+                                toggleEditing()
                             }
-
-                            if (group.uuid != starredGroupUUID)
-                                Row (
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .offset(x = 0.dp, y = 12.dp)
-                                ){
-                                    AnimatedVisibility (isEditing) {
-                                        FilledTonalIconButton(
-                                            onClick = {
-                                                pickImage(
-                                                    {
-                                                        viewModel.setGroupImage(it, group)
-                                                    },
-                                                    {}
-                                                )
-                                            }
-                                        ) {
-                                            Icon(Icons.Outlined.Image, null)
-                                        }
-                                    }
-
-                                    AnimatedVisibility(
-                                        visible = !imageExpanded,
-                                        exit = slideOutHorizontally(targetOffsetX = { it / 1 }) + fadeOut(),
-                                        modifier = Modifier.padding(end = 12.dp)
-                                    ){
-                                        FilledTonalIconButton(
-                                            onClick = {
-                                                if (isEditing) {
-                                                    if (selectedForRemoval.isNotEmpty())
-                                                        viewModel.removeRecordingsFromGroup(
-                                                            selectedForRemoval,
-                                                            group
-                                                        )
-                                                    recordings =
-                                                        recordings.filter { it !in selectedForRemoval.map { it.uri.toString() } }
-                                                    selectedForRemoval = mutableStateListOf()
-                                                    viewModel.editGroupName(titleFieldText, group)
-                                                }
-                                                titleFieldText = group.name
-                                                toggleEditing()
-                                            }
-                                        ) {
-                                            Crossfade(targetState = isEditing) {
-                                                if (it)
-                                                    Icon(Icons.Outlined.Save, null)
-                                                else
-                                                    Icon(Icons.Outlined.Edit, null)
-                                            }
-                                        }
-                                    }
-                                    Spacer(Modifier.width(0.dp))
-                                }
-                        }
+                        )
                     }
                     item {
                         Spacer(Modifier.height(12.dp))
@@ -402,9 +228,6 @@ fun GroupScreen (
                             lazyListState,
                             key = rec,
                             modifier = Modifier
-                                .onGloballyPositioned {
-//                                    itemHeight = it.size.height.dp
-                                }
                                 .padding(12.dp, 0.dp)
                         ) { isDragging ->
                             val elevation = animateDpAsState(if (isDragging) 16.dp else 0.dp)
@@ -511,6 +334,211 @@ fun GroupScreen (
         navController.navigateUp()
         viewModel.deleteGroup(group)
         showDeleteGroupDialog = false
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GroupHeader(
+    group: RecordingGroup,
+    viewHeight: Dp,
+    isEditing: Boolean,
+    fieldTextPadding: Dp,
+    titleFieldText: String,
+    setTitleFieldText: (String) -> Unit,
+    groupDuration: Int,
+    pickImage: () -> Unit,
+    onClickEditButton: () -> Unit
+) {
+    var imageExpanded by remember { mutableStateOf(false) }
+    val imageHeight by animateDpAsState(
+        if (imageExpanded) viewHeight else (viewHeight.value*0.35).dp
+    )
+
+    val titleFont = MaterialTheme.typography.displaySmall
+    var titleFontSize by remember { mutableStateOf(titleFont.fontSize) }
+
+    BoxWithConstraints(
+        Modifier
+            .fillMaxWidth()
+            .then(
+                if (group.imgUri != null) Modifier.height(imageHeight) else Modifier
+            )
+            .clickable { imageExpanded = !imageExpanded && !isEditing }
+            .clip(
+                animateDpAsState(
+                    if (imageExpanded) 0.dp else 18.dp
+                ).value.let {
+                    RoundedCornerShape(
+                        0.dp, 0.dp,
+                        it, it
+                    )
+                }
+            )
+    ) {
+        val boxMaxWidth = this.maxWidth
+        group.imgUri?.let {
+            AsyncImage(
+                model = Uri.parse(it),
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                contentDescription = null
+            )
+        }
+        Surface(
+            color = Color.Transparent,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .then(
+                    if (group.imgUri != null) Modifier else Modifier.fillMaxWidth()
+                )
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+            ) {
+                Spacer(Modifier.height(18.dp))
+                Row {
+                    Spacer(Modifier.width(12.dp))
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        onClick = { },
+                        modifier = Modifier.height(24.dp),
+                        shadowElevation = if (group.imgUri != null) 8.dp else 0.dp
+                    ) {
+                        Text(
+                            "${group.recordings.size} Recording${if (group.recordings.size != 1) "s" else ""}",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(8.dp, 4.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        onClick = { },
+                        modifier = Modifier.height(24.dp),
+                        shadowElevation = if (group.imgUri != null) 8.dp else 0.dp
+                    ) {
+                        Text(
+                            groupDuration.toLong().toTimestamp(),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(
+                                8.dp,
+                                4.dp
+                            )
+                        )
+
+                    }
+                    Spacer(Modifier.width(12.dp))
+                }
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 1f),
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .widthIn(max = (0.75 * boxMaxWidth.value).dp),
+                    shadowElevation = if (group.imgUri != null) 8.dp else 0.dp
+                ) {
+                    Crossfade(
+                        targetState = isEditing,
+                        modifier = Modifier.animateContentSize()
+                    ) {
+                        if (!it)
+                            Text(
+                                group.name,
+                                style = MaterialTheme.typography.displaySmall.copy(
+                                    fontSize = titleFontSize
+                                ),
+                                modifier = Modifier.padding(8.dp + fieldTextPadding),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                onTextLayout = { textLayoutResult ->
+                                    val maxCurrentLineIndex: Int =
+                                        textLayoutResult.lineCount - 1
+
+                                    if (textLayoutResult.isLineEllipsized(
+                                            maxCurrentLineIndex
+                                        )
+                                    ) {
+                                        titleFontSize = titleFontSize.times(
+                                            TEXT_SCALE_REDUCTION_INTERVAL
+                                        )
+                                    }
+                                }
+                            )
+                        else
+                            TextField(
+                                value = titleFieldText,
+                                onValueChange = setTitleFieldText,
+                                shape = MaterialTheme.shapes.medium,
+                                colors = TextFieldDefaults.textFieldColors(
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                textStyle = MaterialTheme.typography.displaySmall.copy(
+                                    fontSize = titleFontSize
+                                )
+                            )
+                    }
+                }
+                Spacer(
+                    modifier = Modifier.height(
+                        animateDpAsState(
+                            if (imageExpanded) WindowInsets.navigationBars.asPaddingValues()
+                                .calculateBottomPadding() else 0.dp
+                        ).value
+                    )
+                )
+            }
+        }
+
+        if (group.uuid != starredGroupUUID)
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 0.dp, y = 12.dp)
+            ) {
+                AnimatedVisibility(isEditing) {
+                    FilledTonalIconButton(
+                        onClick = {
+                            pickImage()
+                        }
+                    ) {
+                        Icon(Icons.Outlined.Image, null)
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = !imageExpanded,
+                    exit = slideOutHorizontally(targetOffsetX = { it / 1 }) + fadeOut(),
+                    modifier = Modifier.padding(end = 12.dp)
+                ) {
+                    FilledTonalIconButton(
+                        onClick = onClickEditButton
+                    ) {
+                        Crossfade(targetState = isEditing) {
+                            if (it)
+                                Icon(Icons.Outlined.Save, null)
+                            else
+                                Icon(Icons.Outlined.Edit, null)
+                        }
+                    }
+                }
+                Spacer(Modifier.width(0.dp))
+            }
     }
 }
 

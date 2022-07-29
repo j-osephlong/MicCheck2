@@ -73,8 +73,10 @@ fun MainActivity.loadData() {
     }
 
     val dataFile = File(applicationContext.filesDir, "MicCheckAppData.json")
-    if (!dataFile.exists())
+    if (!dataFile.exists()) {
+        viewModel.groups.add(createStarredGroup())
         return
+    }
     val packagedData = dataFile.readText()
     val unpackedData: PackagedData =
         try {

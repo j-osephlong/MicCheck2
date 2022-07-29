@@ -172,10 +172,11 @@ fun MainActivity.beginShareAsVideo (
             }
         }
         lifecycleScope.launch {
-            delay(3000)
+            delay(5000)
             viewModel.ffmpegState = FFMPEGState.None
         }
     }
+    Toast.makeText(this, "Creating the video, sit tight. (Don't leave the app.)", Toast.LENGTH_LONG).show()
 }
 
 fun MainActivity.finishShareAsVideo(
