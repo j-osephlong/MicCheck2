@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "390808875506",
+    "project_id": "miccheck-20606",
+    "storage_bucket": "miccheck-20606.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:390808875506:android:1dd51ad05de12efed77b6b",
+        "android_client_info": {
+          "package_name": "com.jlong.miccheck"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "390808875506-oua13es6vknbq80u49qhkutt5nuhh5jq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCkMqAxUgPzfAtbIU-CoIKao6d4HldKzc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "390808875506-oua13es6vknbq80u49qhkutt5nuhh5jq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

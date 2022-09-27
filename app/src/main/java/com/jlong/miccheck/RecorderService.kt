@@ -25,7 +25,7 @@ enum class RecorderActions {
 }
 
 enum class RecordingState {
-    RECORDING, PAUSED, STOPPED, WAITING, ELAPSED_TIME
+    RECORDING, PAUSED, STOPPED, WAITING, ELAPSED_TIME, ERROR
 }
 
 class RecorderService : Service() {
@@ -46,6 +46,7 @@ class RecorderService : Service() {
 
     var sampleRate: Int = 0
     var encodingBitRate: Int = 0
+    var outputFormat: OutputFormat = OutputFormat.M4A
 
     var isPaused = false
 
@@ -80,6 +81,12 @@ class RecorderService : Service() {
     }
 
     fun onStartRecord(params: Bundle) {
+        sampleRate = params.getInt("sampleRate")
+        encodingBitRate = params.getInt("encodingBitRate")
+        outputFormat = params.getString("outputFormat")?.let {
+            OutputFormat.valueOf(it)
+        } ?: OutputFormat.M4A
+
         val uri = createRecordingFile()
         val failToast: () -> Unit = {
             Toast.makeText(
@@ -94,8 +101,7 @@ class RecorderService : Service() {
             failToast()
             return
         }
-        sampleRate = params.getInt("sampleRate")
-        encodingBitRate = params.getInt("encodingBitRate")
+
         if (recorder != null) {
             recorder?.apply {
                 try {
@@ -110,6 +116,12 @@ class RecorderService : Service() {
         if (!prepareRecorder()) {
             Log.e("RecorderServer", "Recorder is null.")
             failToast()
+            mActivityMessenger?.apply {
+                send(Message().apply {
+                    obj = RecordingState.ERROR
+                })
+            }
+
             return
         } else {
 //                recorder!!.reset()
@@ -196,9 +208,13 @@ class RecorderService : Service() {
     }
 
     fun onStopRecord() {
-        recorder?.apply {
-            stop()
-            release()
+        try {
+            recorder?.apply {
+                stop()
+                release()
+            }
+        } catch (e: RuntimeException) {
+            Toast.makeText(this, "Recording failed, the microphone didn't send any data :/", Toast.LENGTH_LONG).show()
         }
         recorder = null
         currentOutputFileDescriptor?.close()
@@ -231,21 +247,25 @@ class RecorderService : Service() {
     }
 
     private fun prepareRecorder(): Boolean {
-        recorder = MediaRecorder().apply {
-            setAudioSource(MediaRecorder.AudioSource.DEFAULT)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setAudioEncodingBitRate(encodingBitRate)
-            setAudioSamplingRate(sampleRate)
-            setOutputFile(currentOutputFileDescriptor!!.fileDescriptor)
+        try {
+            recorder = MediaRecorder().apply {
+                setAudioSource(MediaRecorder.AudioSource.DEFAULT) //TODO(#1 Crash source)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setAudioEncodingBitRate(encodingBitRate)
+                setAudioSamplingRate(sampleRate)
+                setOutputFile(currentOutputFileDescriptor!!.fileDescriptor)
 
-            try {
-                prepare()
-                Log.e("MicCheck", "prepare() succeeded")
-            } catch (e: IOException) {
-                Log.e("MicCheck", "prepare() failed")
-                return@prepareRecorder false
+                try {
+                    prepare()
+                    Log.e("MicCheck", "prepare() succeeded")
+                } catch (e: IOException) {
+                    Log.e("MicCheck", "prepare() failed")
+                    return@prepareRecorder false
+                }
             }
+        } catch (e: Exception) {
+            return false
         }
         return true
     }
@@ -263,13 +283,24 @@ class RecorderService : Service() {
             MediaStore.Audio.Media.DATE_ADDED,
             (System.currentTimeMillis() / 1000).toInt()
         )
-        values.put(MediaStore.Audio.Media.MIME_TYPE, "audio/mp4")
+        values.put(MediaStore.Audio.Media.MIME_TYPE, "audio/${
+            when (outputFormat) {
+                OutputFormat.M4A -> "mp4"
+                OutputFormat.WAV -> "wav"
+            }
+        }")
         values.put(MediaStore.Audio.Media.ARTIST, "Me")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             values.put(MediaStore.Audio.Media.RELATIVE_PATH, "Music/micCheck/")
         } else {
             val directory = getExternalFilesDir(Environment.DIRECTORY_MUSIC)
-            values.put(MediaStore.Audio.AudioColumns.DATA, "${directory}/Untitled Recording.m4a")
+            values.put(MediaStore.Audio.AudioColumns.DATA,
+                "${directory}/Untitled Recording.${
+                    when (outputFormat) {
+                        OutputFormat.M4A -> "m4a"
+                        OutputFormat.WAV -> "wav"
+                    }
+                }")
         }
 
         val audioUri = applicationContext.contentResolver.insert(

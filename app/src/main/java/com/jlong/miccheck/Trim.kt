@@ -136,7 +136,8 @@ fun MainActivity.beginShareAsVideo (
     recording: Recording,
     visuals: Uri,
     loopVideo: Boolean,
-    isImage: Boolean
+    isImage: Boolean,
+    debugCommand: String? = null
 ) {
 
     val loopString = if (loopVideo)
@@ -146,8 +147,16 @@ fun MainActivity.beginShareAsVideo (
     val command = if (!isImage)
         "$loopString-i \"${visuals.path}\" -i \"${recording.path}\" -y -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 -shortest \"$tempPath\""
     else
-        "-r 1 -loop 1 -y -i \"${visuals.path}\" -i \"${recording.path}\" -r 1 -shortest \"$tempPath\""
+        debugCommand?.let {
+            var new = it
+            new = new.replaceFirst("__VPATH__", "\"${visuals.path}\"")
+            new = new.replaceFirst("__RPATH__", "\"${recording.path}\"")
+            new = new.replaceFirst("__TPATH__", "\"$tempPath\"")
+            new
+        }
+            ?: "-r 1 -loop 1 -y -i \"${visuals.path}\" -i \"${recording.path}\" -r 1 -shortest \"$tempPath\""
 
+    Log.i("micCheckFFMPEG", "Running ffmpeg command: \n\t$command")
     viewModel.ffmpegState = FFMPEGState.Running
     ffmpegExecId = FFmpeg.executeAsync(
         command

@@ -16,23 +16,31 @@ import androidx.compose.ui.window.DialogProperties
 @Composable
 fun ExportDialog(
     visible: Boolean,
+    isPro: Boolean,
     onClose: () -> Unit,
     onShare: () -> Unit,
+    onOpenGetPro: () -> Unit,
     onExportAsVideo: () -> Unit
 ) {
     if (visible)
         AlertDialog(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier =
-                Modifier
-                    .padding(48.dp)
-                    .widthIn(280.dp, 560.dp)
-                    .heightIn(max = 560.dp),
+            Modifier
+                .padding(48.dp)
+                .widthIn(280.dp, 560.dp)
+                .heightIn(max = 560.dp),
             onDismissRequest = { onClose() },
             confirmButton = { Button(onClick = { onShare() }) { Text("Share") } },
             dismissButton = {
-                FilledTonalButton(onClick = { onExportAsVideo() }) {
-                    Text("Export as Video")
+                if (isPro) {
+                    FilledTonalButton(onClick = { onExportAsVideo() }) {
+                        Text("Export as Video")
+                    }
+                } else {
+                    FilledTonalButton(onClick = { onOpenGetPro() }) {
+                        Text("Get Pro")
+                    }
                 }
             },
             title = { Text("Export Recording") },

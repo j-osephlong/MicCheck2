@@ -243,7 +243,11 @@ fun RecordingControlsCard(listState: LazyListState, viewModel: MicCheckViewModel
                                 Modifier.width(18.dp)
                             )
                             Text(
-                                "Recording",
+                                when(viewModel.recordingState) {
+                                    RecordingState.RECORDING -> "Recording"
+                                    RecordingState.PAUSED -> "Paused"
+                                    else -> "Done"
+                                },
                                 style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold)
                             )
                         }

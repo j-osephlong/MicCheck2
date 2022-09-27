@@ -8,6 +8,7 @@ import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.*
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.media.MediaMetadata.METADATA_KEY_MEDIA_URI
 import android.net.Uri
@@ -26,14 +27,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.insets.ProvideWindowInsets
+import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.jlong.miccheck.billing.Billing
 import com.jlong.miccheck.billing.PRO_SKU
@@ -77,6 +79,7 @@ class MainActivity : ComponentActivity() {
     }
 
     //region lifecycle functions
+    @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -86,6 +89,7 @@ class MainActivity : ComponentActivity() {
 
         createNotificationChannel()
 
+        viewModel.inDebugMode = 0 != applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE
         viewModel.serializeAndSave = this::serializeAndSaveData
         loadData()
         if (!viewModel.settings.firstLaunch) {
@@ -129,6 +133,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+
             MicCheckTheme (
                 darkTheme = when (viewModel.settings.theme) {
                     ThemeOptions.Light -> false
@@ -144,22 +149,34 @@ class MainActivity : ComponentActivity() {
                         systemUiController.setSystemBarsColor(Color.Transparent, darkIcons = useDarkIcons)
                     }
                     if (viewModel.settings.firstLaunch)
-                        FirstLaunchScreen(viewModel = viewModel, requestPermissions = {
-                            if (!permissions.all {
-                                    ActivityCompat.checkSelfPermission(
-                                        this,
-                                        it
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                }) {
-                                requestPermissions.launch(permissions)
+                        FirstLaunchScreen(
+                            viewModel = viewModel,
+                            requestPermissions = {
+                                if (!permissions.all {
+                                        ActivityCompat.checkSelfPermission(
+                                            this,
+                                            it
+                                        ) == PackageManager.PERMISSION_GRANTED
+                                    }) {
+                                    requestPermissions.launch(permissions)
+                                }
+                            },
+                            onComplete = {
+                                lifecycleScope.launch {
+                                    withContext(Dispatchers.IO) {
+                                        discoverAudioFiles()
+                                    }
+                                }
+                                viewModel.clearFirstLaunch()
                             }
-                        }) {
+                        ) {
                             lifecycleScope.launch {
                                 withContext(Dispatchers.IO) {
                                     discoverAudioFiles()
                                 }
                             }
                             viewModel.clearFirstLaunch()
+                            viewModel.firstStartShowProScreen = true
                         }
                     else
                         App(
@@ -173,6 +190,13 @@ class MainActivity : ComponentActivity() {
                             this::startImportData
                         )
                 }
+            }
+        }
+
+        when {
+            intent?.action == Intent.ACTION_SEND && intent?.type?.startsWith("audio/") == true -> {
+                Log.i("MAIN", "Intent found !! ${intent}")
+                importExternalFileFromIntent(intent)
             }
         }
     }
@@ -238,6 +262,14 @@ class MainActivity : ComponentActivity() {
                 RecordingState.ELAPSED_TIME -> {
                     val time = msg.data.getLong("ELAPSED")
                     viewModel.recordTime = time
+                }
+                RecordingState.ERROR -> {
+                    Log.i("RecordeHandler", "Received error from recording service after attempting to record.")
+                    viewModel.recordingState = RecordingState.WAITING
+
+                    if (viewModel.deniedPermissions.contains(Manifest.permission.RECORD_AUDIO)) {
+                        viewModel.showLatePermissionsDialog = true
+                    }
                 }
                 else -> viewModel.recordingState = msg.obj as RecordingState
             }
@@ -595,7 +627,7 @@ fun MainActivity.discoverAudioFiles () {
                 viewModel.recordings.add(
                     Recording(
                         contentUri,
-                        dName.removeSuffix(".m4a"),
+                        dName.removeSuffix(".m4a").removeSuffix(".wav"),
                         duration,
                         size,
                         Formatter.formatShortFileSize(this@discoverAudioFiles, size.toLong()).toString(),
@@ -615,7 +647,6 @@ fun MainActivity.discoverAudioFiles () {
         }
     }
 
-    // TODO: Create save functions
     lifecycleScope.launch {
         withContext(Dispatchers.IO) {
             serializeAndSaveData()

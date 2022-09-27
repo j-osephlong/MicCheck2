@@ -50,7 +50,7 @@ class Billing private constructor(
     override fun onPurchasesUpdated(billingResult: BillingResult, list: MutableList<Purchase>?) {
         when (billingResult.responseCode) {
             BillingClient.BillingResponseCode.OK -> if (null != list) {
-//                TODO: handlePurchase(list)
+                handlePurchase(list)
                 return
             } else Log.d(TAG, "Null Purchase List Returned from OK response!")
             BillingClient.BillingResponseCode.USER_CANCELED ->
@@ -98,7 +98,7 @@ class Billing private constructor(
     }
 
     override fun onBillingServiceDisconnected() {
-        TODO("Not yet implemented")
+        Log.i(TAG, "Billing service disconnected.")
     }
 
     private fun isSignatureValid(purchase: Purchase): Boolean {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material3.*
@@ -59,11 +60,11 @@ fun GroupList(
                 Spacer(Modifier.height(12.dp))
                 Row {
                     OutlinedChip(
-                        text = { Text("Groups", style = MaterialTheme.typography.labelLarge) },
-                        leadingIcon = Icons.Rounded.LibraryMusic,
+                        text = { Text("Recordings", style = MaterialTheme.typography.labelLarge) },
+                        leadingIcon = Icons.Rounded.ArrowBack,
                         showLeadingIcon = true,
                         colors = chipColors,
-                        enabled = viewModel.showingGroupsList
+                        enabled = true
                     ) {
                         viewModel.showingGroupsList = !viewModel.showingGroupsList
                     }

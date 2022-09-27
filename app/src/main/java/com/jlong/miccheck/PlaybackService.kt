@@ -314,6 +314,8 @@ class PlaybackService : MediaBrowserServiceCompat() {
             setSessionToken(sessionToken)
             isActive = true
         }
+
+
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -757,7 +759,6 @@ class PlaybackService : MediaBrowserServiceCompat() {
 //        GlobalScope.launch {
 //            // 5
 
-
         val bitmap = mediaExtras!!.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI).let {
             if (it != null && it != "null" &&
                 Build.VERSION.SDK_INT >= 28
@@ -774,6 +775,15 @@ class PlaybackService : MediaBrowserServiceCompat() {
 //                BitmapFactory.decodeResource(resources, R.drawable.ic_notification)
         }
         Log.i("NotificationBuilder", "${bitmap?.width}, ${bitmap?.height}")
+
+        mMediaSession?.setMetadata(MediaMetadataCompat.Builder().apply {
+            putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmap)
+            putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, mediaExtras!!.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI))
+            putString(MediaMetadataCompat.METADATA_KEY_TITLE, mediaExtras!!.getString(MediaMetadataCompat.METADATA_KEY_TITLE))
+            putString(MediaMetadataCompat.METADATA_KEY_ARTIST, mediaExtras!!.getString(MediaMetadataCompat.METADATA_KEY_ARTIST))
+            putString(MediaMetadataCompat.METADATA_KEY_ALBUM, mediaExtras!!.getString(MediaMetadataCompat.METADATA_KEY_ALBUM))
+            putLong(MediaMetadataCompat.METADATA_KEY_DURATION, mediaExtras!!.getLong(MediaMetadataCompat.METADATA_KEY_DURATION))
+        }.build())
         // 7
         initializeNotification(
             mediaDescription,

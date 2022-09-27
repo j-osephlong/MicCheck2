@@ -100,7 +100,7 @@ fun AboutScreen (
                 Modifier
                     .fillMaxWidth()
                     .padding(12.dp, 0.dp)
-                    .clickable { showComingSoonDialog = true },
+                    .clickable { navController.navigate(Destination.GetPro.route) },
                 shape = RoundedCornerShape(18.dp),
                 color = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -115,7 +115,7 @@ fun AboutScreen (
                             .fillMaxWidth()
                             .weight(1f)
                     )
-                    IconButton(onClick = { showComingSoonDialog = true }) {
+                    IconButton(onClick = { navController.navigate(Destination.GetPro.route) }) {
                         Icon(Icons.Rounded.ArrowForward, null)
                     }
                 }

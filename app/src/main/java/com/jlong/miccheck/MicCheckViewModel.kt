@@ -20,6 +20,9 @@ class MicCheckViewModel : ViewModel() {
     lateinit var serializeAndSave: () -> Unit
 
     var isPro by mutableStateOf(false)
+    var firstStartShowProScreen by mutableStateOf(false)
+    var inDebugMode by mutableStateOf(false)
+    var showLatePermissionsDialog by mutableStateOf(false)
 
     var deniedPermissions = mutableStateListOf<String>()
 
@@ -79,8 +82,12 @@ class MicCheckViewModel : ViewModel() {
 
     fun getGroup(uuid: String) = groups.find { it.uuid == uuid }
 
-    fun getGroupRecordings(group: RecordingGroup) = recordings.filter {
-        it.uri.toString() in group.recordings
+    fun getGroupRecordings(group: RecordingGroup) = group.recordings.let {
+        var list = mutableListOf<Recording>()
+        it.forEach {
+            getRecording(Uri.parse(it))?.also {list.add(it)}
+        }
+        list.toList()
     }
 
     fun addTagsToRecording(

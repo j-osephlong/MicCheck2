@@ -340,7 +340,11 @@ data class PackagedData(
 )
 
 enum class DismissableExtraId {
-    LoopUpdateV2, ExportToVideoV2, BitrateOptionsV2, TimestampUpdateV2, WhatsNewV2
+    LoopUpdateV2, ExportToVideoV2, BitrateOptionsV2, TimestampUpdateV2, WhatsNewV2, ProV2_2
+}
+
+enum class OutputFormat {
+    M4A, WAV
 }
 
 @Serializable
@@ -350,7 +354,8 @@ data class UserAndSettings (
     val encodingBitRate: Int = 384000,
     val theme: ThemeOptions = ThemeOptions.System,
     val lastLaunchVersion: MicCheckVersion = MicCheckVersion.V1,
-    val dismissedExtras: List<DismissableExtraId> = listOf()
+    val dismissedExtras: List<DismissableExtraId> = listOf(DismissableExtraId.ProV2_2),
+    val preferredOutputFormat: OutputFormat = OutputFormat.M4A
 )
 
 @Serializable

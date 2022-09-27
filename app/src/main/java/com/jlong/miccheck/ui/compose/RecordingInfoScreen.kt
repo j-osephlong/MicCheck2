@@ -738,20 +738,28 @@ fun RecordingInfoScreen(
                                     }
                                 }
 
-                                AddAttachmentButtons ({showAddLinkAttachmentDialog = true}) {
-                                    pickFile { uri ->
-                                        DocumentFile.fromSingleUri(context, uri).also {
-                                            viewModel.addAttachmentToRecording(
-                                                recording.first,
-                                                Attachment(
-                                                    uri.toString(),
-                                                    it?.name ?: return@pickFile,
-                                                    it.name ?: return@pickFile,
-                                                    it.type ?: return@pickFile
+                                AddAttachmentButtons ({
+                                    if (viewModel.isPro)
+                                        showAddLinkAttachmentDialog = true
+                                    else
+                                        navController.navigate(Destination.GetPro.route)
+                                }) {
+                                    if (viewModel.isPro)
+                                        pickFile { uri ->
+                                            DocumentFile.fromSingleUri(context, uri).also {
+                                                viewModel.addAttachmentToRecording(
+                                                    recording.first,
+                                                    Attachment(
+                                                        uri.toString(),
+                                                        it?.name ?: return@pickFile,
+                                                        it.name ?: return@pickFile,
+                                                        it.type ?: return@pickFile
+                                                    )
                                                 )
-                                            )
+                                            }
                                         }
-                                    }
+                                    else
+                                        navController.navigate(Destination.GetPro.route)
                                 }
 
                             }

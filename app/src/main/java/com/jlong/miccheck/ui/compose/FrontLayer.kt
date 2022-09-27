@@ -31,6 +31,10 @@ sealed class Destination (val route: String) {
     }
     object About: Destination("about")
     object WhatsNew: Destination("whatsNew")
+    object GetPro: Destination("getPro")
+    object GroupTimestampView: Destination("timestampView/{uuid}") {
+        fun createRoute(uuid: String) = "timestampView/$uuid"
+    }
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -47,6 +51,7 @@ fun micFrontLayer(
     Log.i("Composition", "Front Layer composed.")
 
     var showExportDialog by remember { mutableStateOf(false) }
+    var showDebugExportDialog by remember { mutableStateOf(false) }
 
     Surface(Modifier.fillMaxSize()) {
         Box(Modifier.fillMaxSize()) {
@@ -66,6 +71,8 @@ fun micFrontLayer(
                 addGroupScreenGraph(navController,viewModel,playbackClientControls,pickImage)
                 addAboutScreenGraph(navController, viewModel)
                 addWhatsNewScreenGraph(navController, viewModel)
+                addGetProScreenGraph(navController, viewModel)
+                addGroupTimestampViewScreenGraph(navController, viewModel, playbackClientControls, setBackdrop)
             }
 
             Column (
@@ -108,7 +115,8 @@ fun micFrontLayer(
                 AnimatedVisibility(visible =
                     (navBackStackEntry?.destination?.route != Destination.Search.route ||
                             viewModel.searchScreenInSelectMode) &&
-                            navBackStackEntry?.destination?.route != Destination.About.route
+                            navBackStackEntry?.destination?.route != Destination.About.route &&
+                            navBackStackEntry?.destination?.route != Destination.GetPro.route
                 ){
                     FloatingActionButton(
                         onClick = {
@@ -121,7 +129,7 @@ fun micFrontLayer(
                                     }
                                     setBackdrop(true)
                                 }
-                                Destination.Group.route -> {
+                                Destination.Group.route, Destination.GroupTimestampView.route -> {
                                     viewModel.currentGroupScreen?.also {
                                         playbackClientControls.play(
                                             it,
@@ -157,7 +165,7 @@ fun micFrontLayer(
                                     Icons.Rounded.PlayArrow,
                                     null
                                 )
-                                Destination.Group.route -> Icon(Icons.Rounded.VideoLibrary, null)
+                                Destination.Group.route, Destination.GroupTimestampView.route -> Icon(Icons.Rounded.VideoLibrary, null)
                                 Destination.Search.route -> Icon(Icons.Rounded.Check, null)
                                 Destination.WhatsNew.route -> Icon(Icons.Rounded.ArrowForward, null)
                                 else -> {
@@ -183,22 +191,54 @@ fun micFrontLayer(
         }
     }
 
+    LaunchedEffect(viewModel.firstStartShowProScreen) {
+        if (viewModel.firstStartShowProScreen)
+            navController.navigate(Destination.GetPro.route)
+        viewModel.firstStartShowProScreen = false
+    }
+
     ExportDialog(
         visible = showExportDialog,
+        isPro = viewModel.isPro,
         onClose = { showExportDialog = false },
         onShare = {
             viewModel.currentRecordingInfoScreen?.also {
                 playbackClientControls.shareRecording(listOf(it.first))
             }
             showExportDialog = false
+        },
+        onOpenGetPro = {
+            showExportDialog = false
+            navController.navigate(Destination.GetPro.route)
         }
     ) {
-        viewModel.currentRecordingInfoScreen?.also {
-            playbackClientControls.shareRecordingAsVideo(
-                recording = it.first,
-                loopVideo = true
-            )
+        if (!viewModel.inDebugMode) {
+            viewModel.currentRecordingInfoScreen?.also {
+                playbackClientControls.shareRecordingAsVideo(
+                    recording = it.first,
+                    loopVideo = true
+                )
+            }
+        } else {
+            showDebugExportDialog = true
         }
         showExportDialog = false
     }
+
+    DebugExportAsVideoPhotoCommand(
+        visible = showDebugExportDialog,
+        onClose = { showDebugExportDialog = false },
+        onConfirm = { debugCommand ->
+            viewModel.currentRecordingInfoScreen?.also {
+                playbackClientControls.shareRecordingAsVideo(
+                    recording = it.first,
+                    loopVideo = true,
+                    debugCommand = debugCommand
+                )
+            }
+
+            showDebugExportDialog = false
+        },
+        viewModel = viewModel
+    )
 }

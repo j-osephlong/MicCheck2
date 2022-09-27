@@ -20,6 +20,7 @@ class RecorderClientControls (
             data = Bundle().apply {
                 putInt("sampleRate", context.viewModel.settings.sampleRate)
                 putInt("encodingBitRate", context.viewModel.settings.encodingBitRate)
+                putString("outputFormat", context.viewModel.settings.preferredOutputFormat.name)
             }
         }
         context.mRecorderServiceMessenger?.apply {

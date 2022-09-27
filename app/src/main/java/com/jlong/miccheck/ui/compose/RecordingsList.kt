@@ -196,7 +196,7 @@ fun RecordingsList(
                         .padding(12.dp, 0.dp)
                 ) {
                     Spacer(Modifier.height(12.dp))
-                    Row {
+                    Row (Modifier.fillMaxWidth()){
                         OutlinedChip(
                             text = { Text("By ${viewModel.recordingsSortType.text}") },
                             leadingIcon = when (viewModel.recordingsSortType) {
@@ -214,13 +214,18 @@ fun RecordingsList(
                                 showSortScrim = true
                             }
                         }
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.fillMaxWidth().weight(1f))
                         OutlinedChip(
                             text = { Text("Groups") },
                             leadingIcon = Icons.Rounded.LibraryMusic,
                             showLeadingIcon = true,
-                            colors = chipColors,
-                            enabled = viewModel.showingGroupsList
+                            trailingIcon = Icons.Rounded.ArrowForward,
+                            colors = chipColors.copy(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                leadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            enabled = true
                         ) {
                             viewModel.showingGroupsList = !viewModel.showingGroupsList
                         }

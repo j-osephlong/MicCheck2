@@ -1,5 +1,6 @@
 package com.jlong.miccheck.ui.compose
 
+import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
@@ -8,9 +9,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
@@ -21,7 +24,10 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.jlong.miccheck.MicCheckViewModel
 import com.jlong.miccheck.ThemeOptions
+import com.jlong.miccheck.billing.Billing
+import com.jlong.miccheck.billing.PRO_SKU
 import com.jlong.miccheck.ui.theme.surfaceColorAtElevation
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalPagerApi::class)
@@ -29,7 +35,8 @@ import kotlinx.coroutines.launch
 fun FirstLaunchScreen (
     viewModel: MicCheckViewModel,
     requestPermissions: () -> Unit,
-    onComplete: () -> Unit
+    onComplete: () -> Unit,
+    onOpenProScreen: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(0)
@@ -54,7 +61,9 @@ fun FirstLaunchScreen (
                     2 -> FirstLaunchScreenThree(viewModel.settings.theme, viewModel::setTheme)
                     3 -> FirstLaunchScreenFour()
                     4 -> FirstLaunchScreenFive()
-                    5 -> FirstLaunchScreenSix()
+                    5 -> FirstLaunchScreenSix (isPro = viewModel.isPro) {
+                        onOpenProScreen()
+                    }
                     else -> {
 
                     }
@@ -294,27 +303,43 @@ fun FirstLaunchScreenFive() {
 
 @Preview
 @Composable
-fun FirstLaunchScreenSix() {
+fun FirstLaunchScreenSix(isPro: Boolean, openProScreen: () -> Unit) {
+    val context = LocalContext.current
+    val billingInstance = Billing.getInstance(
+        (context as Activity).application, GlobalScope, arrayOf(PRO_SKU), {}
+    )
+    val proPriceFlow = billingInstance.getSkuPrice(PRO_SKU).collectAsState(initial = "")
+
     Column (
         Modifier
             .fillMaxSize()
             .padding(18.dp),
         verticalArrangement = Arrangement.Center) {
         Text(
-            "Coming Soon",
+            "micCheck",
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            "Consider Pro",
+            if (!isPro) "Consider Pro" else "Thank you for supporting the app!",
             style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            "micCheck is built and maintained by a solo developer/student, and contains zero ads. Soon, you'll be able to help support the developer with micCheck Pro, a single 2.99 purchase which gives you a few added perks.",
+            "micCheck is built and maintained by a solo developer/student, and contains zero ads." +
+                    if(!isPro)
+                        "\nYou can now help support the developer with micCheck Pro, a single ${proPriceFlow.value} purchase which gives you a few added perks."
+                    else
+                        "\nYour support is greatly appreciated :)",
             style = MaterialTheme.typography.titleMedium
         )
+        if (!isPro) {
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = openProScreen) {
+                Text("Learn More")
+            }
+        }
     }
 }
 

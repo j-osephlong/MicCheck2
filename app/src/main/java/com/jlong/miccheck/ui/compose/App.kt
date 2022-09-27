@@ -122,11 +122,8 @@ fun MicTopBar (navHost: NavHostController, backdropScaffoldState: BackdropScaffo
                                     DropdownMenuItem(
                                         text = { Text("Support the Developer") },
                                         onClick = {
-                                            Billing.getInstance(
-                                                (context as Activity).application, GlobalScope, arrayOf(PRO_SKU), {}
-                                            ).launchBillingFlow(
-                                                context as Activity, PRO_SKU
-                                            )
+                                            navHost.navigate(Destination.GetPro.route)
+                                            dropDownMenuExpanded = false
                                         })
                                     DropdownMenuItem(
                                         text = { Text("About") },
@@ -148,12 +145,17 @@ fun MicTopBar (navHost: NavHostController, backdropScaffoldState: BackdropScaffo
 
     BitrateDialog(
         visible = showBitrateDialog,
+        isPro = viewModel.isPro,
         currentBitrate = viewModel.settings.encodingBitRate,
         onReset = {
             viewModel.setBitrate(UserAndSettings().encodingBitRate)
             showBitrateDialog = false
         },
-        onClose = { showBitrateDialog = false }
+        onClose = { showBitrateDialog = false },
+        onOpenGetPro = {
+            showBitrateDialog = false
+            navHost.navigate(Destination.GetPro.route)
+        }
     ) {
         viewModel.setBitrate(it)
         showBitrateDialog = false
@@ -195,9 +197,10 @@ fun App(
     val backdropScaffoldState = rememberBackdropScaffoldState(initialValue = BackdropValue.Concealed)
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val navController = rememberAnimatedNavController()
 
     var showReviewDialog by remember { mutableStateOf(viewModel.stats.appLaunches == 5) }
+    var showProDialog by remember { mutableStateOf(!viewModel.settings.dismissedExtras.contains(DismissableExtraId.ProV2_2) && !viewModel.isPro) }
+    val navController = rememberAnimatedNavController()
 
     BackHandler(backdropScaffoldState.isRevealed) {
         coroutineScope.launch {
@@ -272,6 +275,15 @@ fun App(
             }
         }
         showReviewDialog = false
+    }
+
+    GetProDialog(visible = showProDialog, onClose = { showProDialog = false; viewModel.dismissExtra(DismissableExtraId.ProV2_2) }) {
+        showProDialog = false; viewModel.dismissExtra(DismissableExtraId.ProV2_2)
+        navController.navigate(Destination.GetPro.route)
+    }
+
+    LatePermissionsDialog(visible = viewModel.showLatePermissionsDialog, onClose = { viewModel.showLatePermissionsDialog = false }) {
+        playbackClientControls.openPermissions()
     }
 }
 
@@ -354,6 +366,31 @@ fun ReviewDialog (visible: Boolean, onClose: () -> Unit, onConfirm: () -> Unit) 
             }
         )
 }
+
+@Composable
+fun GetProDialog (visible: Boolean, onClose: () -> Unit, onConfirm: () -> Unit) {
+    if (visible)
+        AlertDialog(
+            onDismissRequest = onClose,
+            title = { Text("Just a moment of your time...") },
+            text = {
+                Column {
+                    Text("This app was made by a solo app developer and student, and now you can help support the developer with micCheck Pro!")
+                }
+            },
+            confirmButton = {
+                Button(onClick = onConfirm) {
+                    Text("Learn More")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onClose) {
+                    Text("No Thanks")
+                }
+            }
+        )
+}
+
 
 @Composable
 fun ImportExportDialog (visible: Boolean, onClose: () -> Unit, onExport: () -> Unit, onImport: () -> Unit) {

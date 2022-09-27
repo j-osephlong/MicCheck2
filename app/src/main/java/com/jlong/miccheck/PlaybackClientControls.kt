@@ -50,6 +50,7 @@ class PlaybackClientControls (
                         putBoolean("isOfPlaybackList", true)
                 }
             )
+        context.viewModel
     }
 
     fun play(recording: Triple<Recording, RecordingData, RecordingGroup?>) {
@@ -321,7 +322,7 @@ class PlaybackClientControls (
         context.startActivity(Intent.createChooser(shareIntent, "Share your recordings."))
     }
 
-    fun shareRecordingAsVideo(recording: Recording, loopVideo: Boolean) {
+    fun shareRecordingAsVideo(recording: Recording, loopVideo: Boolean, debugCommand: String? = null) {
         context.pickVideo(
             {
                 Log.i("PlaybackClientControls", "onShareAsVideo received uri $it, type ${context.contentResolver.getType(it)}, scheme ${it.scheme}")
@@ -332,7 +333,8 @@ class PlaybackClientControls (
                     recording,
                     it,
                     loopVideo,
-                    isImage
+                    isImage,
+                    debugCommand = debugCommand
                 )
             },
             {

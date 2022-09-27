@@ -14,9 +14,11 @@ import androidx.core.text.isDigitsOnly
 @Composable
 fun BitrateDialog(
     visible: Boolean,
+    isPro: Boolean,
     currentBitrate: Int,
     onClose: () -> Unit,
     onReset: () -> Unit,
+    onOpenGetPro: () -> Unit,
     onConfirm: (Int) -> Unit
 ) {
     val (bitrateText, setBitrateText) = remember { mutableStateOf(currentBitrate.toString()) }
@@ -27,43 +29,54 @@ fun BitrateDialog(
             onDismissRequest = onClose,
             title = { Text("Set Bitrate") },
             text = {
-                TextField(
-                    value = bitrateText,
-                    onValueChange = { setBitrateText(it); isError = false },
-                    placeholder = { Text("Bitrate") },
-                    label = if (isError) {{ Text("Must be a positive integer") }} else null,
-                    isError = isError,
-                    shape = RoundedCornerShape(28.dp),
-                    colors = TextFieldDefaults.textFieldColors(
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    maxLines = 1,
-                    trailingIcon = {
-                        IconButton(onClick = { setBitrateText("") }) {
-                            Icon(Icons.Rounded.Close, null)
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number
+                if (!isPro) {
+                    Text("This is a micCheck Pro feature.")
+                } else
+                    TextField(
+                        value = bitrateText,
+                        onValueChange = { setBitrateText(it); isError = false },
+                        placeholder = { Text("Bitrate") },
+                        label = if (isError) {{ Text("Must be a positive integer") }} else null,
+                        isError = isError,
+                        shape = RoundedCornerShape(28.dp),
+                        colors = TextFieldDefaults.textFieldColors(
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        maxLines = 1,
+                        trailingIcon = {
+                            IconButton(onClick = { setBitrateText("") }) {
+                                Icon(Icons.Rounded.Close, null)
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number
+                        ),
+                        enabled = isPro
                     )
-                )
             },
             confirmButton = {
-                Button(onClick = {
-                    if (bitrateText.isDigitsOnly() && bitrateText.toInt() > 0)
-                        onConfirm(bitrateText.toInt())
-                    else
-                        isError = true
+                if (isPro)
+                    Button(onClick = {
+                        if (bitrateText.isDigitsOnly() && bitrateText.toInt() > 0)
+                            onConfirm(bitrateText.toInt())
+                        else
+                            isError = true
 
-                }) {
-                    Text("Set")
-                }
+                    }, enabled = isPro) {
+                        Text("Set")
+                    }
+                else
+                    Button(onClick = { onOpenGetPro() }) {
+                        Text("Get Pro")
+                    }
             },
             dismissButton = {
-                FilledTonalButton(onClick = onReset) {
-                    Text("Reset")
+                if (isPro) {
+                    FilledTonalButton(onClick = onReset, enabled = isPro) {
+                        Text("Reset")
+                    }
                 }
                 TextButton(onClick = onClose) {
                     Text("Cancel")
