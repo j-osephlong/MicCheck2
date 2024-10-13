@@ -1,2 +1,4 @@
 /build
+
+../billing.properties
 signing.gradle

@@ -1,6 +1,7 @@
 package com.jlong.miccheck.billing
 
-const val billing_public_key = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxzefQXcayYBcYYp2HiwV5DXcIetdm93GjT3Sg0SeDByHd+Gn/dROjn4kYeWKMZBjYEKbkhRBWneI8r861SDDHYExYOVxcNUZVFsxlZsFOJWIvjOg1gWmTxegelDsJR6fhnEyv5BZuXDZvOj73fE0cIbldXe7530IgFNwIircUvSBpPEu+A5xhx6RDxYL0+6oJ/9yqn0V121JfDaT3GcryTZqD6Pu1MFg1FF0N185WoWrOpLzGzClWUpvWOIrEPEEgm9q78hMazZH9WqYg0iYsaGYzLxuUB5ukEO20htcNZ//SgASEYaEhupJ65IkKPzO3Pz9XHHKN/Okyzc/xveVcQIDAQAB"
+import com.jlong.miccheck.BuildConfig
 
+const val billing_public_key = BuildConfig.BILLING_PUBLIC_KEY
 // SKU
 const val PRO_SKU = "miccheck_pro_default"

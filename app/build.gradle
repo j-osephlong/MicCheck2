@@ -28,6 +28,11 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
+
+        // Google play public billing key stored in 'billing.properties' in app folder.
+        def billing = new Properties()
+        rootProject.file("app/billing.properties").withInputStream { billing.load(it) }
+        buildConfigField "String", "BILLING_PUBLIC_KEY", "${billing.getProperty('BILLING_PUBLIC_KEY')}"
     }
 
     buildTypes {
@@ -35,8 +40,9 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
-            testCoverageEnabled false
             debuggable false
+            enableUnitTestCoverage false
+            enableAndroidTestCoverage false
         }
     }
     compileOptions {
@@ -48,6 +54,7 @@ android {
     }
     buildFeatures {
         compose true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion compose_version
@@ -57,6 +64,7 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
+    namespace 'com.jlong.miccheck'
 }
 
 dependencies {
